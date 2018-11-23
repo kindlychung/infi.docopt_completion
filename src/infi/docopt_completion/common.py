@@ -21,7 +21,7 @@ def build_command_tree(pattern, cmd_params):
         for child in pattern.children:
             cmd_params = build_command_tree(child, cmd_params)
     elif type(pattern) in [Option]:
-        suffix = "=" if pattern.argcount else ""
+        suffix = " " if pattern.argcount else ""
         if pattern.short:
             cmd_params.options.append(pattern.short + suffix)
         if pattern.long:
@@ -36,9 +36,11 @@ def build_command_tree(pattern, cmd_params):
 def get_usage(cmd):
     error_message = "Failed to run '{cmd} --help'".format(cmd=cmd)
     try:
-        cmd_process = subprocess.Popen([cmd, "--help"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_process = subprocess.Popen(
+            [cmd, "--help"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError:
-        raise DocoptCompletionException("{error_message} : command does not exist".format(error_message=error_message))
+        raise DocoptCompletionException(
+            "{error_message} : command does not exist".format(error_message=error_message))
     # Poll process for new output until finished
     usage = bytes()
     while True:
@@ -48,7 +50,8 @@ def get_usage(cmd):
         usage += nextline
     if cmd_process.returncode != 0:
         msg = "{error_message} : command returned {returncode}"
-        raise DocoptCompletionException(msg.format(error_message=error_message, returncode=cmd_process.returncode))
+        raise DocoptCompletionException(msg.format(
+            error_message=error_message, returncode=cmd_process.returncode))
     return usage.decode("ascii")
 
 
@@ -96,6 +99,7 @@ class CommandParams(object):
     This way, we can describe commands like "git remote add origin --fetch" with all the different
     options at each level.
     """
+
     def __init__(self):
         self.arguments = []
         self.options = []
@@ -107,7 +111,8 @@ class CommandParams(object):
     def repr(self, indent):
         s = " " * indent + "cmds:\n"
         for cmd in self.subcommands:
-            s += " " * (indent+4) + "{}:\n{}\n".format(cmd, self.subcommands[cmd].repr(indent+5+len(cmd)))
+            s += " " * (indent+4) + "{}:\n{}\n".format(cmd,
+                                                       self.subcommands[cmd].repr(indent+5+len(cmd)))
         s += " " * indent + "args: {}\n".format(self.arguments)
         s += " " * indent + "opts: {}\n".format(self.options)
         return s
@@ -121,7 +126,8 @@ class CompletionGenerator(object):
 
     def _write_to_file(self, file_path, completion_file_content):
         if not os.access(os.path.dirname(file_path), os.W_OK):
-            print("Skipping file {file_path}, no permissions".format(file_path=file_path))
+            print("Skipping file {file_path}, no permissions".format(
+                file_path=file_path))
             return
         try:
             with open(file_path, "w") as fd:
@@ -129,7 +135,8 @@ class CompletionGenerator(object):
         except IOError:
             print("Failed to write {file_path}".format(file_path=file_path))
             return
-        print("Completion file written to {file_path}".format(file_path=file_path))
+        print("Completion file written to {file_path}".format(
+            file_path=file_path))
 
     def get_name(self):
         raise NotImplementedError()
@@ -147,7 +154,8 @@ class CompletionGenerator(object):
         return os.path.exists(self.get_completion_path())
 
     def generate(self, cmd, param_tree, option_help):
-        completion_file_content = self.get_completion_file_content(cmd, param_tree, option_help)
+        completion_file_content = self.get_completion_file_content(
+            cmd, param_tree, option_help)
         file_paths = self.get_completion_filepath(cmd)
         if not isinstance(file_paths, types.GeneratorType):
             file_paths = [file_paths]
